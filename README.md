@@ -6,15 +6,14 @@ A student AI project by **Tihomira Miteva**. The project investigates how driver
 
 ## Explore the project
 
-- [Final project notebook](notebooks/F1_Race_Prediction.ipynb)
-- [Read-only notebook report](reports/F1_Race_Prediction.html)
+- [Notebook](notebooks/F1_Race_Prediction.ipynb)
 - [Project proposal](docs/project_proposal.pdf)
 - [Domain understanding](docs/domain_understanding.pdf)
 - [Data sources and dataset structure](data/README.md)
 - [Evaluation notes and limitations](docs/evaluation.md)
 - [Early data-collection experiments](scripts/experiments)
 
-## Project question
+## Research question
 
 **How can historical race context and qualifying performance help estimate and rank a driver's likely performance?**
 
