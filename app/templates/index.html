@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>F1 Race Position Predictor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .gp-section {
+            margin-bottom: 30px;
+        }
+
+        .gp-section label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #333;
+            font-size: 1.2em;
+        }
+
+        select, input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        select:focus, input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .circuit-info {
+            background: #f0f4ff;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-size: 0.95em;
+            color: #555;
+        }
+
+        .divider {
+            height: 2px;
+            background: linear-gradient(to right, #667eea, #764ba2);
+            margin: 30px 0;
+        }
+
+        .drivers-section h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+        }
+
+        .driver-row {
+            display: grid;
+            grid-template-columns: 50px 3fr 2fr 2fr 2fr;
+            gap: 15px;
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 10px;
+            align-items: center;
+            transition: transform 0.2s;
+        }
+
+        .driver-row:hover {
+            transform: translateX(5px);
+            background: #f0f4ff;
+        }
+
+        .position-badge {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .field-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .field-group label {
+            font-size: 0.85em;
+            color: #666;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+
+
+        .predict-btn {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.3em;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 30px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .predict-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        .predict-btn:active {
+            transform: translateY(0);
+        }
+
+        .predict-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .results-section {
+            margin-top: 40px;
+            display: none;
+        }
+
+        .results-section.active {
+            display: block;
+        }
+
+        .results-section h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 2em;
+            text-align: center;
+        }
+
+        .result-item {
+            display: grid;
+            grid-template-columns: 80px 1fr 150px;
+            gap: 20px;
+            padding: 20px;
+            margin-bottom: 15px;
+            background: white;
+            border-radius: 12px;
+            border-left: 5px solid #667eea;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            align-items: center;
+            transition: transform 0.2s;
+        }
+
+        .result-item:hover {
+            transform: translateX(5px);
+        }
+
+        .result-item.podium {
+            border-left-width: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .result-item.podium-1 {
+            border-left-color: #FFD700;
+            background: linear-gradient(to right, #fff9e6, white);
+        }
+
+        .result-item.podium-2 {
+            border-left-color: #C0C0C0;
+            background: linear-gradient(to right, #f5f5f5, white);
+        }
+
+        .result-item.podium-3 {
+            border-left-color: #CD7F32;
+            background: linear-gradient(to right, #fff5ed, white);
+        }
+
+        .result-position {
+            font-size: 2em;
+            font-weight: bold;
+            color: #333;
+            text-align: center;
+        }
+
+        .result-info h3 {
+            color: #333;
+            margin-bottom: 5px;
+            font-size: 1.3em;
+        }
+
+        .result-info p {
+            color: #666;
+            font-size: 0.95em;
+            margin: 2px 0;
+        }
+
+        .confidence-bar {
+            width: 100%;
+            height: 30px;
+            background: #e0e0e0;
+            border-radius: 15px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .confidence-fill {
+            height: 100%;
+            background: linear-gradient(to right, #667eea, #764ba2);
+            transition: width 1s ease;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 10px;
+            color: white;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+
+        .insights {
+            margin-top: 30px;
+            padding: 25px;
+            background: #f0f4ff;
+            border-radius: 12px;
+        }
+
+        .insights h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+
+        .insight-item {
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .insight-item.gain {
+            border-left-color: #4caf50;
+        }
+
+        .insight-item.loss {
+            border-left-color: #ff9800;
+        }
+
+        .error-message {
+            background: #ffebee;
+            color: #c62828;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #c62828;
+            display: none;
+        }
+
+        .error-message.active {
+            display: block;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            display: none;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .driver-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .result-item {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏎️ F1 Race Position Predictor</h1>
+        <p class="subtitle">Predict race results from qualifying times</p>
+
+        <div class="error-message" id="errorMessage"></div>
+
+        <div class="gp-section">
+            <label for="gpSelect">🏁 Select Grand Prix</label>
+            <select id="gpSelect">
+                <option value="">Loading circuits...</option>
+            </select>
+            <div class="circuit-info" id="circuitInfo" style="display: none;"></div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="drivers-section">
+            <h2>Q3 Qualifying Results (Top 10)</h2>
+            
+            <div id="driversContainer"></div>
+        </div>
+
+        <button class="predict-btn" id="predictBtn" onclick="predictResults()">
+            🔮 Predict Race Results
+        </button>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Analyzing data and generating predictions...</p>
+        </div>
+
+        <div class="results-section" id="resultsSection">
+            <h2>🏆 Predicted Race Results</h2>
+            <div id="resultsContainer"></div>
+            
+            <div class="insights" id="insights"></div>
+        </div>
+    </div>
+
+    <script>
+        let circuits = [];
+        let drivers = [];
+        let circuitInfo = null;
+
+        // Load initial data
+        async function loadData() {
+            try {
+                const [circuitsRes, driversRes] = await Promise.all([
+                    fetch('/api/circuits'),
+                    fetch('/api/drivers')
+                ]);
+
+                circuits = await circuitsRes.json();
+                drivers = await driversRes.json();
+
+                populateCircuits();
+                createDriverRows();
+            } catch (error) {
+                showError('Error loading data: ' + error.message);
+            }
+        }
+
+        function populateCircuits() {
+            const select = document.getElementById('gpSelect');
+            select.innerHTML = '<option value="">Select a circuit...</option>';
+            
+            circuits.forEach(circuit => {
+                const option = document.createElement('option');
+                option.value = circuit;
+                option.textContent = circuit.charAt(0).toUpperCase() + circuit.slice(1).replace(/-/g, ' ');
+                select.appendChild(option);
+            });
+
+            select.addEventListener('change', async (e) => {
+                if (e.target.value) {
+                    const response = await fetch(`/api/circuit-info/${e.target.value}`);
+                    circuitInfo = await response.json();
+                    
+                    const infoDiv = document.getElementById('circuitInfo');
+                    infoDiv.innerHTML = `<strong>Circuit Info:</strong> ${circuitInfo.turns} turns, ${circuitInfo.courseLength} km course length`;
+                    infoDiv.style.display = 'block';
+                }
+            });
+        }
+
+        function getUniqueTeams() {
+            const teams = new Set();
+            drivers.forEach(d => {
+                if (d.team) teams.add(d.team);
+            });
+            return Array.from(teams).sort();
+        }
+
+        function getUniqueEngines() {
+            const engines = new Set();
+            drivers.forEach(d => {
+                if (d.engine) engines.add(d.engine);
+            });
+            return Array.from(engines).sort();
+        }
+
+        function populateTeamAndEngineDropdowns() {
+            const teams = getUniqueTeams();
+            const engines = getUniqueEngines();
+            
+            for (let i = 1; i <= 10; i++) {
+                const teamSelect = document.getElementById(`team-${i}`);
+                const engineSelect = document.getElementById(`engine-${i}`);
+                
+                // Populate teams
+                teamSelect.innerHTML = '<option value="">Select team...</option>';
+                teams.forEach(team => {
+                    const option = document.createElement('option');
+                    option.value = team;
+                    option.textContent = team.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                    teamSelect.appendChild(option);
+                });
+                
+                // Populate engines
+                engineSelect.innerHTML = '<option value="">Select engine...</option>';
+                engines.forEach(engine => {
+                    const option = document.createElement('option');
+                    option.value = engine;
+                    option.textContent = engine.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                    engineSelect.appendChild(option);
+                });
+            }
+        }
+
+        function createDriverRows() {
+            const container = document.getElementById('driversContainer');
+            
+            for (let i = 1; i <= 10; i++) {
+                const row = document.createElement('div');
+                row.className = 'driver-row';
+                row.innerHTML = `
+                    <div class="position-badge">${i}</div>
+                    <div class="field-group">
+                        <label>Driver</label>
+                        <select id="driver-${i}" onchange="updateDriverInfo(${i})">
+                            <option value="">Select driver...</option>
+                            ${drivers.map(d => `
+                                <option value="${d.id}" data-team="${d.team}" data-engine="${d.engine}">
+                                    ${d.id.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}${d.number ? ' (#' + d.number + ')' : ''}
+                                </option>
+                            `).join('')}
+                        </select>
+                    </div>
+                    <div class="field-group">
+                        <label>Team</label>
+                        <select id="team-${i}">
+                            <option value="">Select team...</option>
+                        </select>
+                    </div>
+                    <div class="field-group">
+                        <label>Engine</label>
+                        <select id="engine-${i}">
+                            <option value="">Select engine...</option>
+                        </select>
+                    </div>
+                    <div class="field-group">
+                        <label>Q3 Time</label>
+                        <input type="text" id="time-${i}" placeholder="1:23.456" maxlength="9" oninput="formatTimeInput(${i})" onblur="reorderDriversByTime()">
+                    </div>
+                `;
+                container.appendChild(row);
+            }
+            
+            // Populate team and engine dropdowns
+            populateTeamAndEngineDropdowns();
+        }
+
+        function updateDriverInfo(position) {
+            // Update all dropdowns to reflect used drivers
+            updateAllDriverDropdowns();
+        }
+
+        function updateAllDriverDropdowns() {
+            // Get all selected driver IDs
+            const selectedDrivers = new Set();
+            for (let i = 1; i <= 10; i++) {
+                const select = document.getElementById(`driver-${i}`);
+                if (select.value) {
+                    selectedDrivers.add(select.value);
+                }
+            }
+            
+            // Store all original driver options (from global drivers array)
+            const allDriverOptions = [
+                { value: '', text: 'Select driver...', team: null, engine: null }
+            ];
+            
+            drivers.forEach(d => {
+                allDriverOptions.push({
+                    value: d.id,
+                    text: `${d.id.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}${d.number ? ' (#' + d.number + ')' : ''}`,
+                    team: d.team,
+                    engine: d.engine
+                });
+            });
+            
+            // Update each dropdown
+            for (let i = 1; i <= 10; i++) {
+                const select = document.getElementById(`driver-${i}`);
+                const currentValue = select.value;
+                
+                // Clear and rebuild options
+                select.innerHTML = '';
+                
+                allDriverOptions.forEach(opt => {
+                    // Show option if it's empty, currently selected, or not selected elsewhere
+                    if (!opt.value || opt.value === currentValue || !selectedDrivers.has(opt.value)) {
+                        const option = document.createElement('option');
+                        option.value = opt.value;
+                        option.textContent = opt.text;
+                        if (opt.team) option.setAttribute('data-team', opt.team);
+                        if (opt.engine) option.setAttribute('data-engine', opt.engine);
+                        if (opt.value === currentValue) option.selected = true;
+                        select.appendChild(option);
+                    }
+                });
+            }
+        }
+
+        function formatTimeInput(position) {
+            const input = document.getElementById(`time-${position}`);
+            let value = input.value.replace(/[^0-9]/g, ''); // Remove non-digits
+            
+            if (value.length === 0) {
+                input.value = '';
+                return;
+            }
+            
+            // Cap at 6 digits (M:SS.mmm - 1 minute + 2 seconds + 3 decimals)
+            if (value.length > 6) {
+                value = value.substring(0, 6);
+            }
+            
+            // Format: M:SS.mmm (up to 3 decimal places)
+            let formatted = '';
+            
+            if (value.length <= 1) {
+                // Just minutes
+                formatted = value;
+            } else if (value.length <= 3) {
+                // Minutes and seconds (partial)
+                formatted = value[0] + ':' + value.substring(1);
+            } else {
+                // Minutes, seconds, and milliseconds (1-3 decimal places)
+                formatted = value[0] + ':' + value.substring(1, 3) + '.' + value.substring(3);
+            }
+            
+            input.value = formatted;
+        }
+
+        function timeToSeconds(timeStr) {
+            if (!timeStr || timeStr.trim() === '') return null;
+            try {
+                const parts = timeStr.split(':');
+                if (parts.length === 2) {
+                    const minutes = parseInt(parts[0]);
+                    const seconds = parseFloat(parts[1]);
+                    return minutes * 60 + seconds;
+                }
+            } catch (e) {
+                return null;
+            }
+            return null;
+        }
+
+        function reorderDriversByTime() {
+            // Collect all driver data with times
+            const driversWithTimes = [];
+            const driversWithoutTimes = [];
+            
+            for (let i = 1; i <= 10; i++) {
+                const driverSelect = document.getElementById(`driver-${i}`);
+                const timeInput = document.getElementById(`time-${i}`);
+                const teamSelect = document.getElementById(`team-${i}`);
+                const engineSelect = document.getElementById(`engine-${i}`);
+                
+                const driverId = driverSelect.value;
+                const time = timeInput.value;
+                const timeInSeconds = timeToSeconds(time);
+                
+                if (driverId) {
+                    const driverData = {
+                        driverId: driverId,
+                        time: time,
+                        timeInSeconds: timeInSeconds,
+                        team: teamSelect.value,
+                        engine: engineSelect.value
+                    };
+                    
+                    if (timeInSeconds !== null) {
+                        driversWithTimes.push(driverData);
+                    } else {
+                        driversWithoutTimes.push(driverData);
+                    }
+                }
+            }
+            
+            // Sort drivers with times by time (fastest first)
+            driversWithTimes.sort((a, b) => a.timeInSeconds - b.timeInSeconds);
+            
+            // Combine: drivers with times first, then drivers without times
+            const allDrivers = [...driversWithTimes, ...driversWithoutTimes];
+            
+            // Clear all fields temporarily
+            for (let i = 1; i <= 10; i++) {
+                document.getElementById(`driver-${i}`).value = '';
+                document.getElementById(`time-${i}`).value = '';
+                document.getElementById(`team-${i}`).value = '';
+                document.getElementById(`engine-${i}`).value = '';
+            }
+            
+            // Update all dropdowns first (this rebuilds them with all available drivers)
+            updateAllDriverDropdowns();
+            
+            // Fill in sorted drivers after dropdowns are rebuilt
+            allDrivers.forEach((driver, index) => {
+                const position = index + 1;
+                if (position <= 10) {
+                    const driverSelect = document.getElementById(`driver-${position}`);
+                    const teamSelect = document.getElementById(`team-${position}`);
+                    const engineSelect = document.getElementById(`engine-${position}`);
+                    
+                    driverSelect.value = driver.driverId;
+                    document.getElementById(`time-${position}`).value = driver.time;
+                    teamSelect.value = driver.team;
+                    engineSelect.value = driver.engine;
+                }
+            });
+            
+            // Update all dropdowns again to reflect the new selections and hide used drivers
+            updateAllDriverDropdowns();
+        }
+
+        function validateTimeFormat(time) {
+            const pattern = /^\d+:\d{2}\.\d{3}$/;
+            return pattern.test(time);
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.classList.add('active');
+            setTimeout(() => errorDiv.classList.remove('active'), 5000);
+        }
+
+        async function predictResults() {
+            const gpSelect = document.getElementById('gpSelect');
+            const gpName = gpSelect.value;
+
+            if (!gpName) {
+                showError('Please select a Grand Prix');
+                return;
+            }
+
+            // Collect driver data
+            const driversData = [];
+            let errors = [];
+
+            for (let i = 1; i <= 10; i++) {
+                const driverSelect = document.getElementById(`driver-${i}`);
+                const driverId = driverSelect.value;
+                const time = document.getElementById(`time-${i}`).value;
+
+                if (!driverId) {
+                    errors.push(`Position ${i}: Please select a driver`);
+                    continue;
+                }
+
+                if (!time) {
+                    errors.push(`Position ${i}: Please enter Q3 time`);
+                    continue;
+                }
+
+                if (!validateTimeFormat(time)) {
+                    errors.push(`Position ${i}: Invalid time format (use M:SS.mmm like 1:21.352)`);
+                    continue;
+                }
+
+                const selectedOption = driverSelect.options[driverSelect.selectedIndex];
+                const team = selectedOption.getAttribute('data-team');
+                const engine = selectedOption.getAttribute('data-engine');
+
+                driversData.push({
+                    position: i,
+                    driverId: driverId,
+                    team: team,
+                    engine: engine,
+                    time: time
+                });
+            }
+
+            if (errors.length > 0) {
+                showError(errors.join('\n'));
+                return;
+            }
+
+            // Show loading
+            document.getElementById('loading').classList.add('active');
+            document.getElementById('predictBtn').disabled = true;
+            document.getElementById('resultsSection').classList.remove('active');
+
+            try {
+                const response = await fetch('/api/predict', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        gpName: gpName,
+                        drivers: driversData
+                    })
+                });
+
+                const results = await response.json();
+                displayResults(results);
+
+            } catch (error) {
+                showError('Error making prediction: ' + error.message);
+            } finally {
+                document.getElementById('loading').classList.remove('active');
+                document.getElementById('predictBtn').disabled = false;
+            }
+        }
+
+        function displayResults(results) {
+            const container = document.getElementById('resultsContainer');
+            const insightsDiv = document.getElementById('insights');
+            
+            container.innerHTML = '';
+            
+            const medals = ['🥇', '🥈', '🥉'];
+            
+            results.forEach(result => {
+                const item = document.createElement('div');
+                item.className = 'result-item';
+                
+                if (result.position <= 3) {
+                    item.classList.add('podium', `podium-${result.position}`);
+                }
+                
+                const driverName = result.driverId.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                const teamName = result.team.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                
+                item.innerHTML = `
+                    <div class="result-position">
+                        ${result.position <= 3 ? medals[result.position - 1] : 'P' + result.position}
+                    </div>
+                    <div class="result-info">
+                        <h3>${driverName}</h3>
+                        <p><strong>Team:</strong> ${teamName}</p>
+                        <p><strong>Qualified:</strong> P${result.qualPosition} ${result.positionChange > 0 ? '↗ +' + result.positionChange : result.positionChange < 0 ? '↘ ' + result.positionChange : '→ 0'}</p>
+                    </div>
+                    <div>
+                        <div class="confidence-bar">
+                            <div class="confidence-fill" style="width: ${result.score * 100}%">
+                                ${(result.score * 100).toFixed(0)}%
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                container.appendChild(item);
+            });
+            
+            // Calculate insights
+            const positionChanges = results.map(r => ({
+                driver: r.driverId,
+                change: r.positionChange
+            }));
+            
+            const biggestGain = positionChanges.reduce((max, curr) => curr.change > max.change ? curr : max);
+            const biggestLoss = positionChanges.reduce((min, curr) => curr.change < min.change ? curr : min);
+            
+            insightsDiv.innerHTML = '<h3>📊 Insights</h3>';
+            
+            if (biggestGain.change > 0) {
+                insightsDiv.innerHTML += `
+                    <div class="insight-item gain">
+                        <strong>🚀 Biggest Gainer:</strong> ${biggestGain.driver.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())} 
+                        (Expected to gain ${biggestGain.change} position${biggestGain.change > 1 ? 's' : ''})
+                    </div>
+                `;
+            }
+            
+            if (biggestLoss.change < 0) {
+                insightsDiv.innerHTML += `
+                    <div class="insight-item loss">
+                        <strong>📉 Potential Drop:</strong> ${biggestLoss.driver.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())} 
+                        (May lose ${Math.abs(biggestLoss.change)} position${Math.abs(biggestLoss.change) > 1 ? 's' : ''})
+                    </div>
+                `;
+            }
+            
+            document.getElementById('resultsSection').classList.add('active');
+            document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Load data on page load
+        loadData();
+    </script>
+</body>
+</html>
