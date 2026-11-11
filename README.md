@@ -2,7 +2,7 @@
 
 **Exploring Formula 1 performance with historical data, KNN classification and a local race-ranking demo.**
 
-A student AI project by **Tihomira Miteva**. The project investigates how driver, constructor, circuit and qualifying information relate to race performance. It includes data preparation, exploratory analysis, a classification experiment and a Flask interface for entering a race scenario.
+The project investigates how driver, constructor, circuit and qualifying information relate to race performance. It includes data preparation, exploratory analysis, a classification experiment and a Flask interface for entering a race scenario.
 
 ## Explore the project
 
